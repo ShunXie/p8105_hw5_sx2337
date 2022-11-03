@@ -1,0 +1,52 @@
+---
+title: "p8105_hw5_sx2337"
+author: "Shun Xie"
+date: "2022-11-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#load packages
+library(tidyverse)
+library(dbplyr)
+
+```
+
+# Problem 1
+
+```{r,show_col_types = FALSE}
+
+All_files_names = list.files("data/")
+
+
+
+All_files = 
+  tibble(
+    Name = str_remove(All_files_names, ".csv")) %>% 
+  separate(Name, into = c("Control_Experiment","Index"), sep = "_") %>% 
+  mutate(results =purrr::map(.x = str_c("data/",All_files_names), ~read_csv(.x, show_col_types = FALSE))) %>% 
+  unnest(results) %>% 
+  pivot_longer(
+    cols = starts_with("week_"),
+    names_to = "week_number",
+    names_prefix = "week_",
+    values_to = "value"
+  ) %>% 
+  ggplot(aes(x = week_number, y=value, group = Index))+
+  geom_line(aes(color = Index)) + facet_grid(. ~ Control_Experiment)
+All_files
+```
+Over the time, experiment group has a persistent increase over the week while the control group has value relatively stable values below 5.0. 
+
+
+
+# Problem 2
+
+
+
+
+
