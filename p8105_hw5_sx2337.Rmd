@@ -2,7 +2,7 @@
 title: "p8105_hw5_sx2337"
 author: "Shun Xie"
 date: "2022-11-03"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #load packages
 library(tidyverse)
 library(dbplyr)
-
+options(tibble.print_min = 5)
 ```
 
 # Problem 1
@@ -21,8 +21,6 @@ library(dbplyr)
 ```{r,show_col_types = FALSE}
 
 All_files_names = list.files("data/")
-
-
 
 All_files = 
   tibble(
@@ -46,8 +44,18 @@ Over the time, experiment group has a persistent increase over the week while th
 
 # Problem 2
 ```{r}
-homocide_data = read_csv("data/data-homicides-master/homicide-data.csv", show_col_types = FALSE)
+homocide_data = read_csv("data-homicides-master/homicide-data.csv", show_col_types = FALSE)
+homocide_data
+```
 
+The data contains ```r length(homocide_data)``` number of columns corresponding to different variables:
+
+uid is a variable that uniquely identify the homocide case. Reported date gives the data that the homocide case is reported. Victim information such as the person's last name, first name, race, age and sex are also included in the variables. City and State variable corresponds to the city and state that the homocide happens, as well as the exact location measured in latitude and longitude in lat and lon variables in the dataset. The disposition variable shows the current state of the case. There are ```r length(unique(homocide_data$disposition))``` unique status of disposition, namely ```r unique(homocide_data$disposition)```. 
+
+```{r}
+homocide_data_changed = 
+  homocide_data %>%
+  mutate(city_state = str_c(city, ", ", state))
 ```
 
 
