@@ -52,11 +52,139 @@ The data contains ```r length(homocide_data)``` number of columns corresponding 
 
 uid is a variable that uniquely identify the homocide case. Reported date gives the data that the homocide case is reported. Victim information such as the person's last name, first name, race, age and sex are also included in the variables. City and State variable corresponds to the city and state that the homocide happens, as well as the exact location measured in latitude and longitude in lat and lon variables in the dataset. The disposition variable shows the current state of the case. There are ```r length(unique(homocide_data$disposition))``` unique status of disposition, namely ```r unique(homocide_data$disposition)```. 
 
+
+Combine the city_state. Then summarize within cities to obtain the total number of homicides and the number of unsolved homicides.
 ```{r}
-homocide_data_changed = 
+
+homocide_data_new = 
   homocide_data %>%
-  mutate(city_state = str_c(city, ", ", state))
+  mutate(city_state = str_c(city, ", ", state)) 
+
+homocide_data_new%>% 
+  group_by(city_state) %>% 
+  summarize(
+    n_obs = n(),
+    n_unsolved = sum(disposition=='Closed without arrest')+sum(disposition=='Open/No arrest')
+  ) %>% 
+  arrange(desc(n_obs))
 ```
+
+
+For the city of Baltimore, MD, the proportion of homicides that is unsolved can be calculated here:
+```{r}
+homocide_data_new_Baltimore = filter(homocide_data_new, city_state == "Baltimore, MD")  
+
+#save as an R object 
+prop_Baltimore_result = prop.test(sum(homocide_data_new_Baltimore$disposition=='Closed without arrest' | homocide_data_new_Baltimore$disposition=='Open/No arrest'),length(homocide_data_new_Baltimore$disposition))
+
+#save the data
+save(prop_Baltimore_result, file = "results/Prop_result_Baltimore.RData")
+
+
+#apply tidy function and pull the estimate and confidence intervals
+prop_Baltimore_result %>% 
+  broom::tidy() %>% 
+  select(estimate, conf.low, conf.high)
+```
+
+For all cities, first get all the distinct cities vector, and create a function that do the exact the same thing with city Baltimore:
+```{r}
+all_distinct_city = unique(homocide_data_new$city_state)
+
+
+#define function
+prop_test_function = function(cityname){
+  dataset = filter(homocide_data_new, city_state == cityname)
+  
+  result = 
+    prop.test(sum(dataset$disposition=='Closed without arrest' | dataset$disposition=='Open/No arrest'), length(dataset$disposition)) %>% 
+    broom::tidy() %>% 
+    select(estimate, conf.low, conf.high)
+
+  #return result
+  result
+}
+```
+
+
+Now can iterate over all distinct cities using apply function and store in a list:
+```{r}
+prop_test_output = 
+  expand_grid(city_name = all_distinct_city) %>% 
+  mutate(test_df = map(all_distinct_city, prop_test_function)) %>% 
+  unnest(test_df) %>% 
+  arrange(desc(estimate))
+prop_test_output
+```
+
+
+```{r, fig.height=8, fig.width=10}
+ggplot(prop_test_output, aes(x=fct_reorder(city_name, estimate), y=estimate))+
+  geom_point()+
+  coord_flip()+
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high))+
+  labs(title = "Proportion of unsolved homocide among cities", )+xlab("City")
+```
+ The estimates are as indicated above. Tulsa, AL is the region that have only one case and the case is solved. Therefore, the confidence interval is large. 
+ 
+ 
+# Problem 3
+
+Define a function so that the input can take the value for sample size, population mean and population variance. Operate t test on the simulated sample to give a result to t test. 
+
+```{r}
+#Set the design elements in the default of function
+sim_t_test = function(n=30, mu = 0, sigma = 5) {
+  sim_data = tibble(x = rnorm(n, mean = mu, sd = sigma))
+  
+  sim_data %>% 
+    t.test(alpha =.05) %>% 
+    broom::tidy() %>% 
+    select(estimate, p.value)
+}
+sim_t_test()
+```
+
+Now generate 5000 times and save mu and pvalue:
+
+```{r}
+sim_results_mu0 = 
+  expand_grid(
+    mu_val = 0,
+    iter = 1:5000
+  ) %>% 
+  mutate(
+    estimate_df = map(.x = mu_val, ~sim_t_test(mu=.x))
+  ) %>% 
+  unnest(estimate_df)
+```
+
+
+
+
+
+Based on the function, we can repeat over $\mu=\{0,1,2,3,4,5,6\}$ using apply function:
+
+```{r}
+sim_results_over_mu = 
+  expand_grid(
+    mu_val=0:6,
+    iter = 1:5000
+  ) %>% 
+  mutate(
+    estimate_df = map(.x = mu_val, ~sim_t_test(mu=.x))
+  ) %>% 
+  unnest(estimate_df)
+```
+
+Now make a plot showing the proportion of times the null was rejected for each mu:
+
+```{r}
+sim_results_over_mu %>% 
+  group_by(mu_val) %>% 
+  summarize(proportion = sum(p.value>0)/length(p.value))
+```
+
 
 
 
