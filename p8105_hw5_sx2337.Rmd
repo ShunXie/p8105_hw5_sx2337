@@ -35,7 +35,8 @@ All_files =
     values_to = "value"
   ) %>% 
   ggplot(aes(x = week_number, y=value, group = Index))+
-  geom_line(aes(color = Index)) + facet_grid(. ~ Control_Experiment)
+  geom_line(aes(color = Index)) + facet_grid(. ~ Control_Experiment)+
+  labs(title = "control and experiment value over week" )
 All_files
 ```
 Over the time, experiment group has a persistent increase over the week while the control group has value relatively stable values below 5.0. 
