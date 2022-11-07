@@ -45,7 +45,8 @@ Over the time, experiment group has a persistent increase over the week while th
 
 # Problem 2
 ```{r}
-homocide_data = read_csv("data-homicides-master/homicide-data.csv", show_col_types = FALSE)
+homocide_data = read_csv("data-homicides-master/homicide-data.csv", show_col_types = FALSE) %>% 
+  replace(is.na(.),0)
 homocide_data
 ```
 
