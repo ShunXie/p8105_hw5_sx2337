@@ -110,7 +110,7 @@ prop_test_function = function(cityname){
 
 
 Now can iterate over all distinct cities using apply function and store in a list:
-```{r}
+```{r, warning=FALSE}
 prop_test_output = 
   expand_grid(city_name = all_distinct_city) %>% 
   mutate(test_df = map(all_distinct_city, prop_test_function)) %>% 
@@ -181,13 +181,14 @@ sim_results_over_mu =
 
 Now make a plot showing the proportion of times the null was rejected for each mu:
 
-```{r}
+```{r,warning= FALSE, message=FALSE}
 sim_results_over_mu %>% 
   group_by(mu_val) %>% 
   summarize(proportion = sum(p.value<0.05)/length(p.value)) %>% 
   ungroup() %>% 
   ggplot(aes(x=mu_val, y=proportion))+
   geom_point(shape=19,size = 3)+
+  geom_smooth(se=FALSE)+
   labs(title = "Proportion of times the null mean=0 was rejected for different true mean" )+
   xlab("True Mean")+
   ylab("Proportion of Rejection")
@@ -227,7 +228,13 @@ ggplot(all_estimate_df, aes(x=mu_val, y=avg_mu_hat))+
 ```
 
 
-In accordance to the plot, it seems like the sample average of $\hat \mu$ across tests for which the null is rejected is not approximately equal to the true value of $\mu$. When the true mean is between 0 and 4, the estimated values are very different from each other. This is because for all rejected null values, there estimated value are significantly different from the null hypothesis $\mu =0$. Thus, their estimated mean will likely to be greater than the overall estimated mean which includes estimated mean that is close to null hypothesis $\mu = 0$. But when the power of the test gets stronger, the average estimated mean for simulation with null rejected is similar to the one for all simulations. Especially for the case when effect size is large, in which case almost all cases are rejected. And therefore, estimate values for simulations with null rejected are tend to the estimated values for all cases. 
+In accordance to the plot, it seems like the sample average of $\hat \mu$ across tests for which the null is rejected is not approximately equal to the true value of $\mu$. 
+
+When the true mean is 0, can see that the average estimated mean for rejected null values approximate all values. This is because out of all rejected values from simulated values for N(0,5), there is theoretically a 50-50 percent chance the estimated mean is negative and positive. Therefore, it is likely to have an estimated average mean of a value close to 0 for rejected null values. 
+
+When the true mean is between 1 and 4, the estimated values are very different from each other. This is because for all rejected null values, there estimated value are significantly different from the null hypothesis $\mu =0$. Thus, their estimated mean will likely to be greater than the overall estimated mean which includes estimated mean that is close to null hypothesis $\mu = 0$. 
+
+But when the power of the test gets stronger, the average estimated mean for simulation with null rejected is similar to the one for all simulations. Especially for the case when effect size (true mean is significantly different from null hypothesis) is large, in which case almost all cases are rejected. And therefore, the estimated values for simulations with null rejected tends to have the same estimated values as the estimated values for all cases. 
 
 
 
